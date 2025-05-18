@@ -1,31 +1,29 @@
-import torch
+from ultralytics import YOLO
 import cv2
 
-# Tải mô hình YOLOv5 đã được huấn luyện
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='model.pt')
+# Load mô hình đã train (có thể thay bằng 'runs/detect/train/weights/best.pt')
+model = YOLO("yolo11n_trained.pt")  # hoặc "yolov11n.pt"
 
-# Khởi tạo camera (0 là ID của webcam, bạn có thể thay đổi nếu sử dụng camera khác)
+# Mở webcam (0 là default webcam, nếu dùng camera USB có thể là 1 hoặc 2)
 cap = cv2.VideoCapture(0)
 
 while cap.isOpened():
     ret, frame = cap.read()
-    
     if not ret:
         break
 
-    # Tiến hành phát hiện vật thể với ảnh hiện tại từ webcam
-    results = model(frame)
-    
-    # Vẽ kết quả lên frame
-    results.render()  # Dự đoán và vẽ bounding box lên ảnh
-    
-    # Hiển thị ảnh với các bounding box
-    cv2.imshow('YOLOv5 Detection', results.ims[0])  # Sử dụng results.ims[0] thay vì results.imgs[0]
-    
-    # Dừng khi nhấn phím 'q'
+    # Dự đoán trên khung hình
+    results = model.predict(frame, imgsz=640, conf=0.5)  # conf=0.5: ngưỡng confidence
+
+    # Vẽ kết quả lên khung hình
+    annotated_frame = results[0].plot()
+
+    # Hiển thị
+    cv2.imshow("YOLOv11 Detection", annotated_frame)
+
+    # Nhấn 'q' để thoát
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-# Giải phóng tài nguyên và đóng cửa sổ khi thoát
 cap.release()
 cv2.destroyAllWindows()
